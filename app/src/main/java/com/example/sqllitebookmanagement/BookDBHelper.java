@@ -6,6 +6,8 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -86,6 +88,38 @@ public class BookDBHelper extends SQLiteOpenHelper {
         String[] whereArgs = {String.valueOf(book.getId())};
         db.delete(TABLE_NAME, whereClause, whereArgs);
         db.close();
-    }
-}
 
+    }
+
+    public List<Book> searchBooks(String query) {
+        List<Book> books = new ArrayList<>();
+
+        SQLiteDatabase db = getReadableDatabase();
+        String selection = COLUMN_TITLE + " LIKE ? OR " + COLUMN_AUTHOR + " LIKE ?";
+        String[] selectionArgs = {"%" + query + "%", "%" + query + "%"};
+        Cursor cursor = db.query(
+                TABLE_NAME,
+                null,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                null
+        );
+
+        if (cursor.moveToFirst()) {
+            do {
+                @SuppressLint("Range") int id = cursor.getInt(cursor.getColumnIndex(COLUMN_ID));
+                @SuppressLint("Range") String title = cursor.getString(cursor.getColumnIndex(COLUMN_TITLE));
+                @SuppressLint("Range") String author = cursor.getString(cursor.getColumnIndex(COLUMN_AUTHOR));
+                Book book = new Book(id, title, author);
+                books.add(book);
+            } while (cursor.moveToNext());
+        }
+
+        cursor.close();
+        db.close();
+        return books;
+    }
+
+}
